@@ -421,8 +421,11 @@ def _check_p2(cells_dir: str) -> List[Dict[str, Any]]:
         value = body.get(key)
         if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(float(value)) or value < 0:
             bad_metrics.append(key)
-    # Semantic invariants from scoring.py: editing exposure is lower than RAG,
-    # footprint/overhead must be positive, and privacy routing is a valid majority.
+    # Schema / structural invariants for a measurable P2 artifact. Editing exposure
+    # must be lower than RAG, footprint/overhead positive, and the privacy-routing
+    # fraction a unit interval. The gate predicate itself (fraction > 0.5) lives in
+    # analyze_frame_a.py — a measured FAIL fraction (e.g. 0.103) is valid evidence
+    # for KILL, not a malformed P2 body.
     if not bad_metrics:
         if not (body["exposure_edit"] < body["exposure_rag"]):
             bad_metrics.append("exposure_order")
@@ -431,7 +434,7 @@ def _check_p2(cells_dir: str) -> List[Dict[str, Any]]:
         if not (body["overhead_delta"] > 0):
             bad_metrics.append("overhead_positive")
         router = body["router_edit_majority_on_privacy"]
-        if not (0.5 < router <= 1.0):
+        if not (0.0 <= router <= 1.0):
             bad_metrics.append("router_edit_majority_on_privacy_range")
     provenance = body.get("p2_cost_provenance")
     if provenance is not None and not isinstance(provenance, dict):

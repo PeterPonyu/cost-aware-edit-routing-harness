@@ -397,7 +397,7 @@ def test_adversarial_cases(root: str) -> bool:
         ("missing", lambda p: p.pop("overhead_delta")),
         ("negative", lambda p: p.update(footprint_delta=-1)),
         ("ordering", lambda p: p.update(exposure_edit=2, exposure_rag=1)),
-        ("router", lambda p: p.update(router_edit_majority_on_privacy=.5)),
+        ("router", lambda p: p.update(router_edit_majority_on_privacy=1.5)),
         ("string", lambda p: p.update(overhead_delta="bad")),
         ("nan", lambda p: p.update(overhead_delta=float("nan"))),
     ):

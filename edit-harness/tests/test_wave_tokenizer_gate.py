@@ -6,7 +6,6 @@ import os
 import shutil
 import stat
 import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -17,6 +16,7 @@ from transformers import PreTrainedTokenizerFast
 
 HARNESS = Path(__file__).resolve().parents[1]
 PREPARE = HARNESS / "engine" / "box_prepare_wave.sh"
+PREFLIGHT = HARNESS / "engine" / "box_preflight.sh"
 ASSERT_CLI = HARNESS / "experiments" / "assert_targets_distinguishable.py"
 COUNTERFACT_SHA = "d017056125178a13728594e66a801357a8db9ed7973a7425554bb4271de9fc6f"
 MODEL_NAMES = ("Mistral-7B-v0.3", "Qwen2.5-7B", "Llama-3.1-8B")
@@ -50,6 +50,10 @@ class TestWaveTokenizerGate(unittest.TestCase):
         (self.root / "bin").mkdir(parents=True)
 
         shutil.copy2(PREPARE, self.root / "engine" / PREPARE.name)
+        shutil.copy2(PREFLIGHT, self.root / "engine" / PREFLIGHT.name)
+        (self.root / "engine" / PREFLIGHT.name).chmod(
+            (self.root / "engine" / PREFLIGHT.name).stat().st_mode | stat.S_IXUSR
+        )
         shutil.copy2(ASSERT_CLI, self.root / "experiments" / ASSERT_CLI.name)
         shutil.copy2(HARNESS / "metrics.py", self.root / "metrics.py")
         (self.root / "requirements-box-waves.txt").write_text("", encoding="utf-8")
@@ -101,6 +105,8 @@ class TestWaveTokenizerGate(unittest.TestCase):
             self.root / "bin" / "nvidia-smi",
             "#!/bin/sh\n"
             "case \"$*\" in\n"
+            "  *index,name,memory.total*) "
+            "printf '0, Test 4090D, 24564\\n1, Test 4090D, 24564\\n' ;;\n"
             "  *memory.total*) printf '24564\\n24564\\n' ;;\n"
             "  *) exit 0 ;;\n"
             "esac\n",
@@ -113,6 +119,10 @@ class TestWaveTokenizerGate(unittest.TestCase):
             "  case \"$script\" in\n"
             "    *torch.cuda.is_available*) printf 'torch CUDA devices 2\\n'; exit 0 ;;\n"
             "  esac\n"
+            "  if printf '%s\\n' \"$script\" | grep -q 'bitsandbytes'; then\n"
+            "    printf 'numpy=fixture scipy=fixture transformers=fixture huggingface_hub=fixture bitsandbytes=fixture\\n'\n"
+            "    exit 0\n"
+            "  fi\n"
             "  printf '%s\\n' \"$script\" | exec python3 -\n"
             "else\n"
             "  exec python3 \"$@\"\n"
@@ -123,6 +133,9 @@ class TestWaveTokenizerGate(unittest.TestCase):
             {
                 "HARNESS": str(self.root),
                 "CLOUD_PY": str(self.root / "bin" / "python-wave-gate"),
+                "DATA_DISK": str(self.root / "data"),
+                "HOME": str(self.root / "home"),
+                "HF_HOME": str(self.root / "home" / "hf-cache"),
                 "PATH": f"{self.root / 'bin'}:{self.env['PATH']}",
             }
         )
