@@ -1,4 +1,8 @@
-# Vochn Wisdom Frontier ideas — local-hardware feasibility analysis
+# Routing harness
+
+Experiment harness and provenance gate that produce cost-aware routing cells. Integrity receipts are not a routing win.
+
+**[Site](https://peterponyu.github.io/cost-aware-edit-routing-harness/)** · **[Source](https://github.com/PeterPonyu/cost-aware-edit-routing-harness)**# Vochn Wisdom Frontier ideas — local-hardware feasibility analysis
 
 > Generated: 2026-06-30 · Analysis machine: local machine (actually measured, not a memory-based guess)
 > One-line conclusion: **The 24 GB single GPU is the only hard constraint.** Any idea that is "algorithm / post-training / fine-tuning a small-to-medium model" can almost all be done on this machine; any idea that requires "pretraining a large model from scratch / large-scale video world models / real hardware" cannot be done on this machine (or can only be done as inference / evaluation / a scaled-down version).
